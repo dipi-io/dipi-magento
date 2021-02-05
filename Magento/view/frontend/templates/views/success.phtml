@@ -1,0 +1,24 @@
+<?php
+
+$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+
+$enabled = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface')->getValue('dipi_configuration/general/enabled') ?? false;
+$domain = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface')->getValue('dipi_configuration/general/domain') ?? 'dipi.io';
+$brandId = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface')->getValue('dipi_configuration/general/brand_id') ?? false;
+$orderId = $this->getOrderId();
+
+if ($enabled && $orderId && $brandId && $domain) {
+    $order = $objectManager->create('Magento\Sales\Model\Order')->load($orderId);
+    echo "
+        <script>
+        var _dipi = _dipi || [];
+        _dipi['order_reference'] = '".$orderId."';
+        _dipi['order_amount'] = '".$order->getGrandTotal()."';
+        _dipi['order_currency'] = '".$order->getOrderCurrencyCode()."';
+        _dipi['voucher_code'] = '".$order->getCouponCode()."';
+        _dipi['new_customer'] = '".($order->getCustomerId() > 0 ? 1 : 0)."';
+        (function() { var _dpp1 = document.createElement('iframe'); _dpp1.frameBorder = 0; _dpp1.style.height = 0; _dpp1.style.width = 0; _dpp1.src = '//$domain/t/px/$brandId/?or='+_dipi['order_reference']+'&oa='+_dipi['order_amount']+'&oc='+_dipi['order_currency']+'&vc='+_dipi['voucher_code']+'&nc='+_dipi['new_customer']+'&c='+btoa(document.cookie); var _dpp2 = document.getElementsByTagName('script')[0]; _dpp2.parentNode.insertBefore(_dpp1, _dpp2);
+        })();
+        </script>
+    ";
+}

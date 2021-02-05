@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="dipi" translate="label" sortOrder="900">
+            <label>Dipi</label>
+        </tab>
+        <section id="dipi_configuration" translate="label" showInDefault="1">
+            <label>Configuration</label>
+            <tab>dipi</tab>
+            <resource>Dipi_Magento::config</resource>
+            <group id="general" showInDefault="1" showInStore="1" showInWebsite="1" translate="label">
+                <label>Dipi Configuration</label>
+                <field id="enabled" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="brand_id" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Brand ID</label>
+                </field>
+                <field id="domain" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>CNAME</label>
+                    <comment>Leave empty if this you do not have any custom domain connected to dipi.</comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>
