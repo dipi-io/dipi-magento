@@ -17,9 +17,9 @@
                 <field id="brand_id" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Brand ID</label>
                 </field>
-                <field id="domain" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
-                    <label>CNAME</label>
-                    <comment>Leave empty if this you do not have any custom domain connected to dipi.</comment>
+                <field id="token" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Tracking token</label>
+                    <comment>Your tracking token. Get this at Dipi.io > Client admin > Api & Integration</comment>
                 </field>
             </group>
         </section>

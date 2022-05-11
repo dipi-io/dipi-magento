@@ -3,22 +3,33 @@
 $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 
 $enabled = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface')->getValue('dipi_configuration/general/enabled') ?? false;
-$domain = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface')->getValue('dipi_configuration/general/domain') ?? 'dipi.io';
+$token = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface')->getValue('dipi_configuration/general/token') ?? false;
 $brandId = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface')->getValue('dipi_configuration/general/brand_id') ?? false;
 $orderId = $this->getOrderId();
 
-if ($enabled && $orderId && $brandId && $domain) {
+if ($enabled && $orderId && $brandId && $token) {
+    // Fix for Cloudflare
+    if ( isset( $_SERVER["HTTP_CF_CONNECTING_IP"] ) ) {
+        $_SERVER['REMOTE_ADDR'] = $_SERVER["HTTP_CF_CONNECTING_IP"];
+    }
+
     $order = $objectManager->create('Magento\Sales\Model\Order')->load($orderId);
-    echo "
-        <script>
-        var _dipi = _dipi || [];
-        _dipi['order_reference'] = '".$orderId."';
-        _dipi['order_amount'] = '".$order->getGrandTotal()."';
-        _dipi['order_currency'] = '".$order->getOrderCurrencyCode()."';
-        _dipi['voucher_code'] = '".$order->getCouponCode()."';
-        _dipi['new_customer'] = '".($order->getCustomerId() > 0 ? 1 : 0)."';
-        (function() { var _dpp1 = document.createElement('iframe'); _dpp1.frameBorder = 0; _dpp1.style.height = 0; _dpp1.style.width = 0; _dpp1.src = '//$domain/t/px/$brandId/?or='+_dipi['order_reference']+'&oa='+_dipi['order_amount']+'&oc='+_dipi['order_currency']+'&vc='+_dipi['voucher_code']+'&nc='+_dipi['new_customer']+'&c='+btoa(document.cookie); var _dpp2 = document.getElementsByTagName('script')[0]; _dpp2.parentNode.insertBefore(_dpp1, _dpp2);
-        })();
-        </script>
-    ";
+
+    $data = array(
+        'token' => $token,
+        'reference' => $orderId,
+        'amount' => $order->getGrandTotal(),
+        'currency' => $order->getOrderCurrencyCode(),
+        'discount_code' => $order->getCouponCode(),
+        'user_agent' => $_SERVER['HTTP_USER_AGENT'],
+        'ip_address' => $_SERVER['REMOTE_ADDR'],
+        'cookie' => isset($_COOKIE['dp_' . $brandId]) ? $_COOKIE['dp_' . $brandId] : null,
+        'new_customer' => ($order->getCustomerId() > 0 ? 1 : 0),
+    );
+    
+    $ch = curl_init('https://dipi.io/t/s2s/sale/' . $brandId);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+    curl_exec($ch);
+    curl_close($ch);
 }

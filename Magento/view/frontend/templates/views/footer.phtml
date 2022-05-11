@@ -1,16 +1,33 @@
-
 <?php
 
 $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 
 $enabled = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface')->getValue('dipi_configuration/general/enabled') ?? false;
-$domain = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface')->getValue('dipi_configuration/general/domain') ?? 'dipi.io';
+$token = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface')->getValue('dipi_configuration/general/token') ?? false;
 $brandId = $objectManager->get('Magento\Framework\App\Config\ScopeConfigInterface')->getValue('dipi_configuration/general/brand_id') ?? false;
+$dipi = isset($_GET['dipi']) ? $_GET['dipi'] : false;
 
-if ($enabled && $brandId && $domain) {
-    echo "
-        <div id='dp_$brandId'></div>
-        <script>(function() { if (document.cookie.indexOf('dp_$brandId') === -1) { document.getElementById('dp_$brandId').setAttribute('data-dp', Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)); var dpd = new Date(); dpd = new Date(dpd.getTime()+1000*60*60*24*365); document.cookie = 'dp_$brandId='+document.getElementById('dp_$brandId').getAttribute('data-dp')+'; expires='+dpd.toGMTString()+'; path=/'; } })();</script>
-        <script>(function() { var dipi_params = new URLSearchParams(window.location.search); if (dipi_params.has('dipi')) { var _dp1 = document.createElement('iframe'); _dp1.frameBorder = 0; _dp1.style.height = 0; _dp1.style.width = 0; _dp1.src = '//$domain/t/c/e/'+dipi_params.get('dipi')+'/?c='+btoa(document.cookie); var _dp2 = document.getElementsByTagName('script')[0]; _dp2.parentNode.insertBefore(_dp1, _dp2); } })();</script>
-    ";
+if ($enabled && $brandId && $token && $dipi) {
+    // Fix for Cloudflare
+    if (isset($_SERVER["HTTP_CF_CONNECTING_IP"])) {
+        $_SERVER['REMOTE_ADDR'] = $_SERVER["HTTP_CF_CONNECTING_IP"];
+    }
+
+    if (!isset($_COOKIE['dp_' . $brandId])) {
+        setcookie('dp_' . $brandId, md5(uniqid()), time() + (86400 * 30), '/');
+    }
+
+    $data = array(
+        'token' => $token,
+        'dipi' => $dipi,
+        'ip_address' => $_SERVER['REMOTE_ADDR'],
+        'user_agent' => $_SERVER['HTTP_USER_AGENT'],
+        'cookie' => isset($_COOKIE['dp_' . $brandId]) ? $_COOKIE['dp_' . $brandId] : null,
+    );
+    
+    $ch = curl_init('https://dipi.io/t/s2s/click/' . $brandId);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+    curl_exec($ch);
+    curl_close($ch);
 }
